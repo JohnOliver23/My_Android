@@ -49,6 +49,24 @@ class PessoaDAO {
         }
         return null
     }
+    fun get(title: String): List<Pessoa> {
+        val colunas = arrayOf("id", "nome", "idade")
+        val lista = ArrayList<Pessoa>()
+        val where = "nome LIKE ?"
+        val pwhere = arrayOf(title)
+        val c = this.banco.readableDatabase.query("pessoa", colunas, where, pwhere, null, null, "nome")
+        c.moveToFirst()
+        if (c.count > 0) {
+            do {
+                val id = c.getInt(c.getColumnIndex("id"))
+                val nome = c.getString(c.getColumnIndex("nome"))
+                val idade = c.getInt(c.getColumnIndex("idade"))
+                lista.add(Pessoa(id, nome, idade))
+            }while(c.moveToNext())
+        }
+        return lista
+    }
+
 
     fun update(p:Pessoa){
         val where = "id = ?"

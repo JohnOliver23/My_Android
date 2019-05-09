@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.text.ClipboardManager
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -24,19 +25,19 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         dao = PessoaDAO(this)
-        LoadQuery()
+        LoadQuery("%")
 
     }
 
-    fun LoadQuery(){
-        var myContactsAdapter = MyContactsAdapter(this, dao.get() as ArrayList<Pessoa>)
+    fun LoadQuery(title: String){
+        var myContactsAdapter = MyContactsAdapter(this, dao.get(title) as ArrayList<Pessoa>)
         this.pessoasLv = findViewById(R.id.lvPessoas)
         pessoasLv.adapter = myContactsAdapter
     }
 
     override fun onResume() {
         super.onResume()
-        LoadQuery()
+        LoadQuery("%")
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -44,10 +45,12 @@ class MainActivity : AppCompatActivity() {
         val sv:android.support.v7.widget.SearchView = menu!!.findItem(R.id.app_bar_search).actionView as android.support.v7.widget.SearchView
         sv.setOnQueryTextListener(object : android.support.v7.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
+                LoadQuery(query+"%")
                 return false
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
+                LoadQuery(newText+"%")
                 return false
             }
         })
@@ -83,13 +86,43 @@ class MainActivity : AppCompatActivity() {
             var myContact = listPessoas[position]
             myView.titleTv.text = myContact.nome
             myView.ageTv.text = myContact.idade.toString()+" years"
+            //delete
             myView.deleteBtn.setOnClickListener{
                 dao.delete(myContact.id)
-                LoadQuery()
+                LoadQuery("%")
             }
+            //update
             myView.editBtn.setOnClickListener({
                 updateContact(myContact)
             })
+            //copy btn click
+            myView.copyBtn.setOnClickListener({
+                //get name
+                val name = myView.titleTv.text.toString()
+                //get age
+                val age = myView.ageTv.text.toString()
+                //concat
+                val concat = name+"\n"+age
+                val cb = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                cb.text = concat
+                Toast.makeText(this@MainActivity, "Message Copied", Toast.LENGTH_SHORT).show()
+            })
+            //share btn click
+            myView.shareBtn.setOnClickListener({
+                //get name
+                val name = myView.titleTv.text.toString()
+                //get age
+                val age = myView.ageTv.text.toString()
+                //concat
+                val concat = name+"\n"+age
+                //share intent
+                val shareIntent = Intent()
+                shareIntent.action = Intent.ACTION_SEND
+                shareIntent.type = "text/plain"
+                shareIntent.putExtra(Intent.EXTRA_TEXT, concat)
+                startActivity(Intent.createChooser(shareIntent,concat))
+            })
+
             return myView;
         }
 

@@ -22,15 +22,20 @@ class AddActivity : AppCompatActivity() {
         dao = PessoaDAO(this)
         this.nameET = findViewById(R.id.nameEt)
         this.ageET= findViewById(R.id.idadeEt)
+        this.btnAdd = findViewById(R.id.btnAdd)
         try{
             val bundle:Bundle = intent.extras
             id = bundle.getInt("id",0)
             if(id!=0){
+                //update note
+                //change action bar
+                supportActionBar!!.title = "Update Contact"
+                //change button text
+                btnAdd.text = "Update"
                 nameET.setText(bundle.getString("name"))
                 ageET.setText(bundle.getInt("age").toString())
             }
         }catch(ex:Exception){ }
-        this.btnAdd = findViewById(R.id.btnAdd)
         btnAdd.setOnClickListener({salvar(it)})
 
 
