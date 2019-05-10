@@ -49,11 +49,12 @@ class PessoaDAO {
         }
         return null
     }
-    fun get(title: String): List<Pessoa> {
+    fun getAscending(title: String): List<Pessoa> {
         val colunas = arrayOf("id", "nome", "idade")
         val lista = ArrayList<Pessoa>()
         val where = "nome LIKE ?"
         val pwhere = arrayOf(title)
+        //order by name asc
         val c = this.banco.readableDatabase.query("pessoa", colunas, where, pwhere, null, null, "nome")
         c.moveToFirst()
         if (c.count > 0) {
@@ -63,6 +64,63 @@ class PessoaDAO {
                 val idade = c.getInt(c.getColumnIndex("idade"))
                 lista.add(Pessoa(id, nome, idade))
             }while(c.moveToNext())
+        }
+        return lista
+    }
+
+    fun getDescending(title: String): List<Pessoa> {
+        val colunas = arrayOf("id", "nome", "idade")
+        val lista = ArrayList<Pessoa>()
+        val where = "nome LIKE ?"
+        val pwhere = arrayOf(title)
+        //order by name desc
+        val c = this.banco.readableDatabase.query("pessoa", colunas, where, pwhere, null, null, "nome")
+        c.moveToLast()
+        if (c.count > 0) {
+            do {
+                val id = c.getInt(c.getColumnIndex("id"))
+                val nome = c.getString(c.getColumnIndex("nome"))
+                val idade = c.getInt(c.getColumnIndex("idade"))
+                lista.add(Pessoa(id, nome, idade))
+            }while(c.moveToPrevious())
+        }
+        return lista
+    }
+
+    fun getNewest(title: String): List<Pessoa> {
+        val colunas = arrayOf("id", "nome", "idade")
+        val lista = ArrayList<Pessoa>()
+        val where = "nome LIKE ?"
+        val pwhere = arrayOf(title)
+        //order by age asc
+        val c = this.banco.readableDatabase.query("pessoa", colunas, where, pwhere, null, null, "idade")
+        c.moveToFirst()
+        if (c.count > 0) {
+            do {
+                val id = c.getInt(c.getColumnIndex("id"))
+                val nome = c.getString(c.getColumnIndex("nome"))
+                val idade = c.getInt(c.getColumnIndex("idade"))
+                lista.add(Pessoa(id, nome, idade))
+            }while(c.moveToNext())
+        }
+        return lista
+    }
+
+    fun getOldest(title: String): List<Pessoa> {
+        val colunas = arrayOf("id", "nome", "idade")
+        val lista = ArrayList<Pessoa>()
+        val where = "nome LIKE ?"
+        val pwhere = arrayOf(title)
+        //order by age desc
+        val c = this.banco.readableDatabase.query("pessoa", colunas, where, pwhere, null, null, "idade")
+        c.moveToLast()
+        if (c.count > 0) {
+            do {
+                val id = c.getInt(c.getColumnIndex("id"))
+                val nome = c.getString(c.getColumnIndex("nome"))
+                val idade = c.getInt(c.getColumnIndex("idade"))
+                lista.add(Pessoa(id, nome, idade))
+            }while(c.moveToPrevious())
         }
         return lista
     }

@@ -2,8 +2,10 @@ package com.example.osalvador
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.text.ClipboardManager
 import android.util.Log
 import android.view.Menu
@@ -19,25 +21,49 @@ import kotlinx.android.synthetic.main.row.view.*
 class MainActivity : AppCompatActivity() {
     private lateinit var dao: PessoaDAO
     private lateinit var pessoasLv: ListView
+    //shared preferences
+    var mSharedPref:SharedPreferences?=null
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        mSharedPref = this.getSharedPreferences("My_Data", android.content.Context.MODE_PRIVATE)
         dao = PessoaDAO(this)
-        LoadQuery("%")
+        //load sorting
+        var mSorting = mSharedPref!!.getString("Sort", "ascending")
+        when(mSorting){
+            "ascending"->LoadQuery("%","ascending")
+            "descending"->LoadQuery("%","descending")
+            "newest"->LoadQuery("%","newest")
+            "oldest"->LoadQuery("%","oldest")
+        }
 
     }
 
-    fun LoadQuery(title: String){
-        var myContactsAdapter = MyContactsAdapter(this, dao.get(title) as ArrayList<Pessoa>)
+    fun LoadQuery(title: String, sort:String){
+        var myContactsAdapter:MyContactsAdapter?=null
+        when(sort){
+            "ascending"-> myContactsAdapter = MyContactsAdapter(this, dao.getAscending(title) as ArrayList<Pessoa>)
+            "descending"->myContactsAdapter = MyContactsAdapter(this, dao.getDescending(title) as ArrayList<Pessoa>)
+            "newest"->myContactsAdapter = MyContactsAdapter(this, dao.getNewest(title) as ArrayList<Pessoa>)
+            "oldest"->myContactsAdapter = MyContactsAdapter(this, dao.getOldest(title) as ArrayList<Pessoa>)
+        }
         this.pessoasLv = findViewById(R.id.lvPessoas)
         pessoasLv.adapter = myContactsAdapter
     }
 
     override fun onResume() {
         super.onResume()
-        LoadQuery("%")
+        //load sorting
+        var mSorting = mSharedPref!!.getString("Sort", "ascending")
+        when(mSorting){
+            "ascending"->LoadQuery("%","ascending")
+            "descending"->LoadQuery("%","descending")
+            "newest"->LoadQuery("%","newest")
+            "oldest"->LoadQuery("%","oldest")
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -45,12 +71,24 @@ class MainActivity : AppCompatActivity() {
         val sv:android.support.v7.widget.SearchView = menu!!.findItem(R.id.app_bar_search).actionView as android.support.v7.widget.SearchView
         sv.setOnQueryTextListener(object : android.support.v7.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                LoadQuery(query+"%")
+                var mSorting = mSharedPref!!.getString("Sort", "ascending")
+                when(mSorting){
+                    "ascending"->LoadQuery(query+"%","ascending")
+                    "descending"->LoadQuery(query+"%","descending")
+                    "newest"->LoadQuery(query+"%","newest")
+                    "oldest"->LoadQuery(query+"%","oldest")
+                }
                 return false
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                LoadQuery(newText+"%")
+                var mSorting = mSharedPref!!.getString("Sort", "ascending")
+                when(mSorting){
+                    "ascending"->LoadQuery(newText+"%","ascending")
+                    "descending"->LoadQuery(newText+"%","descending")
+                    "newest"->LoadQuery(newText+"%","newest")
+                    "oldest"->LoadQuery(newText+"%","oldest")
+                }
                 return false
             }
         })
@@ -62,16 +100,66 @@ class MainActivity : AppCompatActivity() {
         if (item!=null){
             when(item.itemId){
                 R.id.addContact->{
-                    Log.e("APP_PESSOA","entrou!")
                     startActivity(Intent(this, AddActivity::class.java))
                 }
-                R.id.action_settings->{
-                    Toast.makeText(this, "settings", Toast.LENGTH_SHORT).show()
+                R.id.action_sort->{
+                    //show sorting dialog
+                    showSortDialog()
                 }
             }
         }
         return super.onOptionsItemSelected(item)
     }
+
+    private fun showSortDialog(){
+        //list of sorting options
+        val sortOptions = arrayOf("Name(Ascending)", "Name(Descending)","Newest", "Oldest")
+        val mBuilder = AlertDialog.Builder(this)
+        mBuilder.setTitle("Sort by")
+        mBuilder.setIcon(R.drawable.ic_action_sort)
+        mBuilder.setSingleChoiceItems(sortOptions, -1){
+            dialogInterface, i->
+            if (i==0){
+               //Name ascending
+                Toast.makeText(this, "Name ascending", Toast.LENGTH_SHORT).show()
+                val editor = mSharedPref!!.edit()
+                editor.putString("Sort", "ascending")
+                editor.apply()
+                LoadQuery("%","ascending")
+
+            }
+            if (i==1){
+                //Name descending
+                Toast.makeText(this, "Name descending", Toast.LENGTH_SHORT).show()
+                val editor = mSharedPref!!.edit()
+                editor.putString("Sort", "descending")
+                editor.apply()
+                LoadQuery("%","descending")
+
+            }
+            if (i==2){
+                //Newest
+                Toast.makeText(this, "Newest", Toast.LENGTH_SHORT).show()
+                val editor = mSharedPref!!.edit()
+                editor.putString("Sort", "newest")
+                editor.apply()
+                LoadQuery("%","newest")
+
+            }
+            if (i==3){
+                //Oldest
+                Toast.makeText(this, "Oldest", Toast.LENGTH_SHORT).show()
+                val editor = mSharedPref!!.edit()
+                editor.putString("Sort", "oldest")
+                editor.apply()
+                LoadQuery("%","oldest")
+            }
+            dialogInterface.dismiss()
+        }
+        val mDialog = mBuilder.create()
+        mDialog.show()
+    }
+
     inner class MyContactsAdapter : BaseAdapter {
         var listPessoas = ArrayList<Pessoa>()
         var context:Context?=null
@@ -89,7 +177,13 @@ class MainActivity : AppCompatActivity() {
             //delete
             myView.deleteBtn.setOnClickListener{
                 dao.delete(myContact.id)
-                LoadQuery("%")
+                var mSorting = mSharedPref!!.getString("Sort", "ascending")
+                when(mSorting){
+                    "ascending"->LoadQuery("%","ascending")
+                    "descending"->LoadQuery("%","descending")
+                    "newest"->LoadQuery("%","newest")
+                    "oldest"->LoadQuery("%","oldest")
+                }
             }
             //update
             myView.editBtn.setOnClickListener({
